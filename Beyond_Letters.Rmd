@@ -1,0 +1,955 @@
+---
+title: "Beyond_Letters"
+output: html_notebook
+---
+```{r libraries, echo=FALSE, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(gridExtra)
+library(ggpmisc)
+library(ggpubr)
+library(ggplot2)
+library(table1)
+library(kableExtra)
+library(plotrix)
+library(reshape2)
+library(effectsize)
+library(rstatix)
+library(dplyr)
+library(lme4)
+library(afex)
+library(lsmeans)
+library(emmeans)
+```
+
+```{r loading-data, echo=FALSE, warning=FALSE, message=FALSE}
+setwd("~/Desktop/Paper")
+Beyond_Letters <- read_csv("Beyond_Letters.csv")
+Beyond_Letters_Child <- subset(Beyond_Letters, (age_category == "Child"))
+Beyond_Letters_Adult <- subset(Beyond_Letters, (age_category == "Adult"))
+```
+
+```{r participants-table, echo=FALSE, warning=FALSE, message=FALSE}
+participant_table <- table1(~visit_age_yrs + wasi_fs2 + wj_brs + twre_index + ctopp_rapid + gender| age_category, data=Beyond_Letters, overall = FALSE,
+                            transpose = TRUE, topclass="Rtable1-grid Rtable1-center")
+
+participant_table
+```
+
+```{r age-graphs-prep, echo=FALSE, warning=FALSE, message=FALSE}
+Age_Graphs <- Beyond_Letters %>% group_by(age_category) %>%
+  summarise(mean_dpr_Let_240_1=mean(dpr_Let_240_1), mean_dpr_Let_240_2=mean(dpr_Let_240_2), mean_dpr_Let_240_3=mean(dpr_Let_240_3),
+            mean_dpr_Let_240_4=mean(dpr_Let_240_4), mean_dpr_Let_240_5=mean(dpr_Let_240_5), mean_dpr_Let_240_6=mean(dpr_Let_240_6),
+            mean_dpr_Num_240_1=mean(dpr_Num_240_1), mean_dpr_Num_240_2=mean(dpr_Num_240_2), mean_dpr_Num_240_3=mean(dpr_Num_240_3),
+            mean_dpr_Num_240_4=mean(dpr_Num_240_4), mean_dpr_Num_240_5=mean(dpr_Num_240_5), mean_dpr_Num_240_6=mean(dpr_Num_240_6),
+            mean_dpr_Obj_240_1=mean(dpr_Obj_240_1), mean_dpr_Obj_240_2=mean(dpr_Obj_240_2), mean_dpr_Obj_240_3=mean(dpr_Obj_240_3),
+            mean_dpr_Obj_240_4=mean(dpr_Obj_240_4), mean_dpr_Obj_240_5=mean(dpr_Obj_240_5), mean_dpr_Obj_240_6=mean(dpr_Obj_240_6),
+            mean_dpr_Pse_240_1=mean(dpr_Pse_240_1), mean_dpr_Pse_240_2=mean(dpr_Pse_240_2), mean_dpr_Pse_240_3=mean(dpr_Pse_240_3),
+            mean_dpr_Pse_240_4=mean(dpr_Pse_240_4), mean_dpr_Pse_240_5=mean(dpr_Pse_240_5), mean_dpr_Pse_240_6=mean(dpr_Pse_240_6),
+            sedprLet_1=std.error(dpr_Let_240_1), sedprLet_2=std.error(dpr_Let_240_2), sedprLet_3=std.error(dpr_Let_240_3),
+            sedprLet_4=std.error(dpr_Let_240_4), sedprLet_5=std.error(dpr_Let_240_5), sedprLet_6=std.error(dpr_Let_240_6),
+            sedprNum_1=std.error(dpr_Num_240_1), sedprNum_2=std.error(dpr_Num_240_2), sedprNum_3=std.error(dpr_Num_240_3),
+            sedprNum_4=std.error(dpr_Num_240_4), sedprNum_5=std.error(dpr_Num_240_5), sedprNum_6=std.error(dpr_Num_240_6),
+            sedprObj_1=std.error(dpr_Obj_240_1), sedprObj_2=std.error(dpr_Obj_240_2), sedprObj_3=std.error(dpr_Obj_240_3),
+            sedprObj_4=std.error(dpr_Obj_240_4), sedprObj_5=std.error(dpr_Obj_240_5), sedprObj_6=std.error(dpr_Obj_240_6),
+            sedprPse_1=std.error(dpr_Pse_240_1), sedprPse_2=std.error(dpr_Pse_240_2), sedprPse_3=std.error(dpr_Pse_240_3),
+            sedprPse_4=std.error(dpr_Pse_240_4), sedprPse_5=std.error(dpr_Pse_240_5), sedprPse_6=std.error(dpr_Pse_240_6))
+
+Age_Graphs <- Age_Graphs %>% rename(meandprLet_1=mean_dpr_Let_240_1)
+Age_Graphs <- Age_Graphs %>% rename(meandprLet_2=mean_dpr_Let_240_2)
+Age_Graphs <- Age_Graphs %>% rename(meandprLet_3=mean_dpr_Let_240_3)
+Age_Graphs <- Age_Graphs %>% rename(meandprLet_4=mean_dpr_Let_240_4)
+Age_Graphs <- Age_Graphs %>% rename(meandprLet_5=mean_dpr_Let_240_5)
+Age_Graphs <- Age_Graphs %>% rename(meandprLet_6=mean_dpr_Let_240_6)
+Age_Graphs <- Age_Graphs %>% rename(meandprNum_1=mean_dpr_Num_240_1)
+Age_Graphs <- Age_Graphs %>% rename(meandprNum_2=mean_dpr_Num_240_2)
+Age_Graphs <- Age_Graphs %>% rename(meandprNum_3=mean_dpr_Num_240_3)
+Age_Graphs <- Age_Graphs %>% rename(meandprNum_4=mean_dpr_Num_240_4)
+Age_Graphs <- Age_Graphs %>% rename(meandprNum_5=mean_dpr_Num_240_5)
+Age_Graphs <- Age_Graphs %>% rename(meandprNum_6=mean_dpr_Num_240_6)
+Age_Graphs <- Age_Graphs %>% rename(meandprObj_1=mean_dpr_Obj_240_1)
+Age_Graphs <- Age_Graphs %>% rename(meandprObj_2=mean_dpr_Obj_240_2)
+Age_Graphs <- Age_Graphs %>% rename(meandprObj_3=mean_dpr_Obj_240_3)
+Age_Graphs <- Age_Graphs %>% rename(meandprObj_4=mean_dpr_Obj_240_4)
+Age_Graphs <- Age_Graphs %>% rename(meandprObj_5=mean_dpr_Obj_240_5)
+Age_Graphs <- Age_Graphs %>% rename(meandprObj_6=mean_dpr_Obj_240_6)
+Age_Graphs <- Age_Graphs %>% rename(meandprPse_1=mean_dpr_Pse_240_1)
+Age_Graphs <- Age_Graphs %>% rename(meandprPse_2=mean_dpr_Pse_240_2)
+Age_Graphs <- Age_Graphs %>% rename(meandprPse_3=mean_dpr_Pse_240_3)
+Age_Graphs <- Age_Graphs %>% rename(meandprPse_4=mean_dpr_Pse_240_4)
+Age_Graphs <- Age_Graphs %>% rename(meandprPse_5=mean_dpr_Pse_240_5)
+Age_Graphs <- Age_Graphs %>% rename(meandprPse_6=mean_dpr_Pse_240_6)
+
+Age_Graphs_mean <- Age_Graphs %>% pivot_longer(cols=c("meandprLet_1", "meandprLet_2", "meandprLet_3", "meandprLet_4", "meandprLet_5", "meandprLet_6",
+                                                      "meandprNum_1", "meandprNum_2", "meandprNum_3", "meandprNum_4", "meandprNum_5", "meandprNum_6",
+                                                      "meandprObj_1", "meandprObj_2", "meandprObj_3", "meandprObj_4", "meandprObj_5", "meandprObj_6",
+                                                      "meandprPse_1", "meandprPse_2", "meandprPse_3", "meandprPse_4", "meandprPse_5", "meandprPse_6"),
+                                               names_sep="_", names_to=c("symbol", "position"), values_to="mean_dprime")
+
+Age_Graphs_se <- Age_Graphs %>% pivot_longer(cols=c("sedprLet_1", "sedprLet_2", "sedprLet_3", "sedprLet_4", "sedprLet_5", "sedprLet_6", 
+                                                    "sedprNum_1", "sedprNum_2", "sedprNum_3", "sedprNum_4", "sedprNum_5", "sedprNum_6", 
+                                                    "sedprObj_1", "sedprObj_2", "sedprObj_3", "sedprObj_4", "sedprObj_5", "sedprObj_6", 
+                                                    "sedprPse_1", "sedprPse_2", "sedprPse_3", "sedprPse_4", "sedprPse_5", "sedprPse_6"), 
+                                             names_sep="_", names_to=c("symbol", "position"), values_to="se_dprime")
+
+Age_Graphs_se_short <- Age_Graphs_se %>% dplyr::select(c(se_dprime))
+
+Age_Graphs_Combined <- cbind(Age_Graphs_mean, Age_Graphs_se_short)
+
+Age_Graphs_Short <- Age_Graphs_Combined %>% dplyr::select(c(age_category, symbol, position, mean_dprime, se_dprime))
+
+Age_Graphs_Bar_Graph <- Beyond_Letters %>% group_by(age_category) %>% summarise(meandprLet=mean(dpr_Let_240), meandprNum=mean(dpr_Num_240),
+                                                                                meandprObj=mean(dpr_Obj_240), meandprPse=mean(dpr_Pse_240),
+                                                                                sedprLet=std.error(dpr_Let_240), sedprNum=std.error(dpr_Num_240),
+                                                                                sedprObj=std.error(dpr_Obj_240),sedprPse=std.error(dpr_Pse_240))
+
+
+Age_Graphs_Bar_Graph_Mean <- Age_Graphs_Bar_Graph %>% pivot_longer(cols=c("meandprLet", "meandprNum", "meandprObj", "meandprPse"), 
+                                                                   names_to="symbol", values_to="mean_dprime")
+
+Age_Graphs_Bar_Graph_se <- Age_Graphs_Bar_Graph %>% pivot_longer(cols=c("sedprLet", "sedprNum", "sedprObj", "sedprPse"), 
+                                                                 names_to="symbol", values_to="se_dprime")
+
+Age_Graphs_Bar_Graph_se_short <- Age_Graphs_Bar_Graph_se %>% dplyr::select(c(se_dprime))
+
+Age_Graphs_Combined_Bar_Graph <- cbind(Age_Graphs_Bar_Graph_Mean,Age_Graphs_Bar_Graph_se_short)
+
+Age_Graphs_Short_Bar_Graph <- Age_Graphs_Combined_Bar_Graph %>% dplyr::select(c(age_category, symbol, mean_dprime, se_dprime))
+
+Age_Graphs_Short_Bar_Graph$element_type <- ifelse(Age_Graphs_Short_Bar_Graph$symbol=="meandprPse", "Pseudo-fonts",
+                                              ifelse(Age_Graphs_Short_Bar_Graph$symbol=="meandprObj", "Objects",
+                                                     ifelse(Age_Graphs_Short_Bar_Graph$symbol=="meandprNum", "Numbers","Letters")))
+```
+
+```{r figure-two, echo=FALSE, warning=FALSE, message=FALSE}
+levels <- c("Numbers", "Letters", "Objects", "Pseudo-fonts")
+Age_Bar_Graph <- Age_Graphs_Short_Bar_Graph %>% ggplot(aes(x=element_type, y=mean_dprime, group=age_category, fill=age_category), frame.plot =
+                                                         FALSE) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(aes(ymin = mean_dprime - se_dprime, ymax = mean_dprime + se_dprime, group = age_category), width = .1, size=1, position =
+                  position_dodge(.9)) + 
+  labs(x = "Element Type", y = "Task Performance (d')", fill = "Age Group") + 
+  scale_fill_manual(values = c("#707070", "#b8b8b8")) +
+  theme_bw() +
+  guides(color = guide_legend(title = "Age Group")) +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(), 
+        axis.line.x = element_line(color = "black", size = 0.5), 
+        axis.line.y = element_line(color = "black", size = 0.5),
+        panel.grid.major.y = element_line(color = "gray", size = 0.1), 
+        panel.grid.major.x = element_line(color = "gray", size = 0.1), 
+        panel.grid.minor.y = element_blank(),
+        axis.title.x = element_text(color = "black", size = 25), 
+        axis.title.y = element_text(color = "black", size = 25), 
+        axis.text.x = element_text(color = "black",  margin = margin(t = .1), size = 20), 
+        axis.text.y = element_text(color = "black", size = 20),
+        plot.title=element_text(face="bold", hjust = 0.5),
+        title = element_text(color = "black", size = 25),
+        legend.text=element_text(color = "black", size = 20),
+        legend.title = element_text(face = "bold", size = 20),
+        text = element_text(family = "Times New Roman"), 
+        legend.position="bottom") + 
+  scale_x_discrete(limits = levels) +
+  scale_y_continuous(breaks = seq(0, 2.5, by = 0.5))
+
+Age_Bar_Graph
+```
+
+```{r figure-three, echo=FALSE, warning=FALSE, message=FALSE}
+Adult_SPF <- Age_Graphs_Short %>% filter(age_category=="Adult") %>%
+  ggplot(aes(x = position, y = mean_dprime, group = symbol, color = symbol)) +
+  geom_line(size=1, show.legend = FALSE) +
+  labs(x="Position",y="Task Performance (d')", title="Adult") +
+  geom_errorbar(aes(ymin = mean_dprime - se_dprime, ymax = mean_dprime + se_dprime, group = symbol), width = .5,size=1, position =
+                  position_dodge(.05)) +
+  scale_color_manual(labels = c("Letters", "Numbers", "Objects", "Pseudo-fonts"), values = c("#317B22", "#462255", "#B20D30", "#C17817")) +
+  theme_bw() +
+  guides(color = guide_legend(title = "Element Type", override.aes = list(size = 6, linewidth = 3))) +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(), 
+        axis.line.x = element_line(color = "black", size = 0.5), 
+        axis.line.y = element_line(color = "black", size = 0.5),
+        panel.grid.major.y = element_line(color = "gray", size = 0.1), 
+        panel.grid.major.x = element_line(color = "gray", size = 0.1), 
+        panel.grid.minor.y = element_blank(),
+        axis.title.x = element_text(color = "black", size = 25), 
+        axis.title.y = element_text(color = "black", size = 25), 
+        axis.text.x = element_text(color = "black",  margin = margin(t = .1), size = 20), 
+        axis.text.y = element_text(color = "black", size = 20),
+        plot.title=element_text(face="bold", hjust = 0.5),
+        title = element_text(color = "black", size = 25),
+        legend.text=element_text(color = "black", size = 20),
+        legend.title = element_text(face = "bold", size = 20),
+        text = element_text(family = "Times New Roman")) +
+  coord_cartesian(ylim = c(0.5, 3.5))
+
+Child_SPF <- Age_Graphs_Short %>% filter(age_category=="Child") %>%
+  ggplot(aes(x = position, y = mean_dprime, group = symbol, color = symbol)) +
+  geom_line(size=1, show.legend = FALSE) +
+  labs(x="Position",y="Task Performance (d')", title="Child") +
+  geom_errorbar(aes(ymin = mean_dprime - se_dprime, ymax = mean_dprime + se_dprime, group = symbol), width = .5,size=1, position =
+                  position_dodge(.05)) +
+  scale_color_manual(labels = c("Letters", "Numbers", "Objects", "Pseudo-fonts"), values = c("#317B22", "#462255", "#B20D30", "#C17817")) +
+  theme_bw() +
+  guides(color = guide_legend(title = "Element Type", override.aes = list(size = 6, linewidth = 3))) +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line.x = element_line(color = "black", size = 0.5),
+        axis.line.y = element_line(color = "black", size = 0.5),
+        panel.grid.major.y = element_line(color = "gray", size = 0.1),
+        panel.grid.major.x = element_line(color = "gray", size = 0.1),
+        panel.grid.minor.y = element_blank(),
+        axis.title.x = element_text(color = "black", size = 25),
+        axis.title.y = element_text(color = "black", size = 25),
+        axis.text.x = element_text(color = "black",  margin = margin(t = .1), size = 20),
+        axis.text.y = element_text(color = "black", size = 20),
+        plot.title=element_text(face="bold", hjust = 0.5),
+        title = element_text(color = "black", size = 25),
+        legend.text=element_text(color = "black", size = 20),
+        legend.title = element_text(face = "bold", size = 20),
+        text = element_text(family = "Times New Roman")) +
+  coord_cartesian(ylim = c(0.5, 3.5))
+
+Age_SPF <- ggarrange(Child_SPF, Adult_SPF, ncol=2, nrow=1, common.legend = TRUE, legend="bottom", labels = c("a.","b."), font.label = list(size = 25, face = "bold", color = "black", family = "Times New Roman"))
+
+Age_SPF
+```
+
+```{r age-adjusting, echo=FALSE, warning=FALSE, message=FALSE}
+lm.Let <- lm(dpr_Let_240 ~visit_age_yrs, data =Beyond_Letters_Child)
+Beyond_Letters_Child$dp_Let_AA <-residuals(lm.Let) 
+
+lm.Num <- lm(dpr_Num_240 ~visit_age_yrs, data =Beyond_Letters_Child)
+Beyond_Letters_Child$dp_Num_AA <-residuals(lm.Num) 
+
+lm.pLet <- lm(dpr_Pse_240 ~visit_age_yrs, data =Beyond_Letters_Child)
+Beyond_Letters_Child$dp_pLet_AA <-residuals(lm.pLet) 
+
+lm.Obj <- lm(dpr_Obj_240 ~visit_age_yrs, data =Beyond_Letters_Child)
+Beyond_Letters_Child$dp_Obj_AA <-residuals(lm.Obj)
+```
+
+```{r figure-four, echo=FALSE, warning=FALSE, message=FALSE}
+#Letters
+Let_WJ <- ggplot(Beyond_Letters_Child, aes(x=wj_brs, y=dp_Let_AA)) +
+  geom_point(color="#317B22", alpha=.8, size=5) +
+  geom_smooth(method=lm , color="#317B22", se=FALSE, size=2) +
+  labs(x = "WJ Basic Reading Score", y ="Age-Adjusted Task Performance (d')", title="Letters") + 
+  stat_cor(cor.coef.name=c("r", "p"), size=10, color="black") + 
+  theme(text = element_text(color="black")) +
+  theme_bw() +
+  theme(
+    panel.border = element_blank(), 
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(), 
+    axis.line.x = element_line(color = "black", size = 0.5),
+    axis.line.y = element_line(color = "black", size = 0.5),
+    panel.grid.major.y = element_line(color = "gray", size = 0.1),
+    panel.grid.major.x = element_line(color = "gray", size = 0.1),
+    panel.grid.minor.y = element_blank(),
+    axis.title.x = element_text(color = "black", size = 25),
+    axis.title.y = element_text(color = "black", size = 25),
+    axis.text.x = element_text(color = "black",  margin = margin(t = .1), size = 20),
+    axis.text.y = element_text(color = "black", size = 20),
+    plot.title=element_text(face="bold", hjust = 0.5),
+    title = element_text(color = "black", size = 25),
+    legend.text=element_text(color = "black", size = 20),
+    legend.title = element_text(face = "bold", size = 20),
+    text = element_text(family = "Times New Roman")) + 
+  coord_cartesian(ylim = c(-2, 2))
+
+#Numbers
+Num_WJ <- ggplot(Beyond_Letters_Child, aes(x=wj_brs, y=dp_Num_AA)) +
+  geom_point(color="#462255", alpha=.8, size=5) +
+  geom_smooth(method=lm , color="#462255", se=FALSE, size=2) +   
+  labs(x = "WJ Basic Reading Score", y ="Age-Adjusted Task Performance (d')", title="Numbers") + 
+  stat_cor(cor.coef.name=c("r", "p"), size=10, color="black") + 
+  theme(text = element_text(color="black")) +
+  theme_bw() +
+  theme(
+    panel.border = element_blank(), 
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(), 
+    axis.line.x = element_line(color = "black", size = 0.5),
+    axis.line.y = element_line(color = "black", size = 0.5),
+    panel.grid.major.y = element_line(color = "gray", size = 0.1),
+    panel.grid.major.x = element_line(color = "gray", size = 0.1),
+    panel.grid.minor.y = element_blank(),
+    axis.title.x = element_text(color = "black", size = 25),
+    axis.title.y = element_text(color = "black", size = 25),
+    axis.text.x = element_text(color = "black",  margin = margin(t = .1), size = 20),
+    axis.text.y = element_text(color = "black", size = 20),
+    plot.title=element_text(face="bold", hjust = 0.5),
+    title = element_text(color = "black", size = 25),
+    legend.text=element_text(color = "black", size = 20),
+    legend.title = element_text(face = "bold", size = 20),
+    text = element_text(family = "Times New Roman")) + 
+  coord_cartesian(ylim = c(-2, 2))
+
+#Objects
+Obj_WJ <- ggplot(Beyond_Letters_Child, aes(x=wj_brs, y=dp_Obj_AA)) +
+  geom_point(color="#B20D30", alpha=.8, size=5) +
+  geom_smooth(method=lm , color="#B20D30", se=FALSE, size=2) +   
+  labs(x = "WJ Basic Reading Score", y ="Age-Adjusted Task Performance (d')", title="Objects") + 
+  stat_cor(cor.coef.name=c("r", "p"), size=10, color="black") + 
+  theme(text = element_text(color="black")) +
+  theme_bw() +
+  theme(
+    panel.border = element_blank(), 
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(), 
+    axis.line.x = element_line(color = "black", size = 0.5),
+    axis.line.y = element_line(color = "black", size = 0.5),
+    panel.grid.major.y = element_line(color = "gray", size = 0.1),
+    panel.grid.major.x = element_line(color = "gray", size = 0.1),
+    panel.grid.minor.y = element_blank(),
+    axis.title.x = element_text(color = "black", size = 25),
+    axis.title.y = element_text(color = "black", size = 25),
+    axis.text.x = element_text(color = "black",  margin = margin(t = .1), size = 20),
+    axis.text.y = element_text(color = "black", size = 20),
+    plot.title=element_text(face="bold", hjust = 0.5),
+    title = element_text(color = "black", size = 25),
+    legend.text=element_text(color = "black", size = 20),
+    legend.title = element_text(face = "bold", size = 20),
+    text = element_text(family = "Times New Roman")) + 
+  coord_cartesian(ylim = c(-2, 2))
+
+#Pseudo-fonts
+Pse_WJ <- ggplot(Beyond_Letters_Child, aes(x=wj_brs, y=dp_pLet_AA)) +
+  geom_point(color="#C17817", alpha=.8, size=5) +
+  geom_smooth(method=lm , color="#C17817", se=FALSE, size=2) +   
+  labs(x = "WJ Basic Reading Score", y ="Age-Adjusted Task Performance (d')", title="Pseudo-fonts") + 
+  stat_cor(cor.coef.name=c("r", "p"), size=10, color="black") + 
+  theme(text = element_text(color="black")) +
+  theme_bw() +
+  theme(
+    panel.border = element_blank(), 
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(), 
+    axis.line.x = element_line(color = "black", size = 0.5),
+    axis.line.y = element_line(color = "black", size = 0.5),
+    panel.grid.major.y = element_line(color = "gray", size = 0.1),
+    panel.grid.major.x = element_line(color = "gray", size = 0.1),
+    panel.grid.minor.y = element_blank(),
+    axis.title.x = element_text(color = "black", size = 25),
+    axis.title.y = element_text(color = "black", size = 25),
+    axis.text.x = element_text(color = "black",  margin = margin(t = .1), size = 20),
+    axis.text.y = element_text(color = "black", size = 20),
+    plot.title=element_text(face="bold", hjust = 0.5),
+    title = element_text(color = "black", size = 25),
+    legend.text=element_text(color = "black", size = 20),
+    legend.title = element_text(face = "bold", size = 20),
+    text = element_text(family = "Times New Roman")) + 
+  coord_cartesian(ylim = c(-2, 2))
+
+WJ <- ggarrange(Let_WJ, Num_WJ, Obj_WJ, Pse_WJ,  ncol=2, nrow=2, common.legend = TRUE, legend="bottom", labels = c("a.","b.","c.","d."), font.label = list(size = 25, face = "bold", color = "black", family = "Times New Roman"))
+
+WJ
+```
+
+```{r reading-group-graph-prep, echo=FALSE, warning=FALSE, message=FALSE}
+Beyond_Letters_Child$reading_group <- ifelse(Beyond_Letters_Child$wj_brs <= 85 | Beyond_Letters_Child$twre_index <= 85, "Dyslexic", "Control")
+Beyond_Letters_Child$reading_group <- as.factor(Beyond_Letters_Child$reading_group)
+
+reading_group_table <- table1(~visit_age_yrs + wasi_fs2 + gender + dyslexia_diagnosis | reading_group, data=Beyond_Letters_Child, overall = FALSE, transpose = TRUE, topclass="Rtable1-grid Rtable1-center")
+
+reading_group_table
+
+Reading_Graphs <- Beyond_Letters_Child %>% group_by(reading_group) %>%
+  summarise(mean_dpr_Let_240_1=mean(dpr_Let_240_1), mean_dpr_Let_240_2=mean(dpr_Let_240_2), mean_dpr_Let_240_3=mean(dpr_Let_240_3),
+            mean_dpr_Let_240_4=mean(dpr_Let_240_4), mean_dpr_Let_240_5=mean(dpr_Let_240_5), mean_dpr_Let_240_6=mean(dpr_Let_240_6),
+            mean_dpr_Num_240_1=mean(dpr_Num_240_1), mean_dpr_Num_240_2=mean(dpr_Num_240_2), mean_dpr_Num_240_3=mean(dpr_Num_240_3),
+            mean_dpr_Num_240_4=mean(dpr_Num_240_4), mean_dpr_Num_240_5=mean(dpr_Num_240_5), mean_dpr_Num_240_6=mean(dpr_Num_240_6), 
+            mean_dpr_Obj_240_1=mean(dpr_Obj_240_1), mean_dpr_Obj_240_2=mean(dpr_Obj_240_2), mean_dpr_Obj_240_3=mean(dpr_Obj_240_3),
+            mean_dpr_Obj_240_4=mean(dpr_Obj_240_4), mean_dpr_Obj_240_5=mean(dpr_Obj_240_5), mean_dpr_Obj_240_6=mean(dpr_Obj_240_6),
+            mean_dpr_Pse_240_1=mean(dpr_Pse_240_1), mean_dpr_Pse_240_2=mean(dpr_Pse_240_2), mean_dpr_Pse_240_3=mean(dpr_Pse_240_3),
+            mean_dpr_Pse_240_4=mean(dpr_Pse_240_4), mean_dpr_Pse_240_5=mean(dpr_Pse_240_5), mean_dpr_Pse_240_6=mean(dpr_Pse_240_6),
+            sedprLet_1=std.error(dpr_Let_240_1), sedprLet_2=std.error(dpr_Let_240_2), sedprLet_3=std.error(dpr_Let_240_3),
+            sedprLet_4=std.error(dpr_Let_240_4), sedprLet_5=std.error(dpr_Let_240_5), sedprLet_6=std.error(dpr_Let_240_6),
+            sedprNum_1=std.error(dpr_Num_240_1), sedprNum_2=std.error(dpr_Num_240_2),sedprNum_3=std.error(dpr_Num_240_3),
+            sedprNum_4=std.error(dpr_Num_240_4),sedprNum_5=std.error(dpr_Num_240_5), sedprNum_6=std.error(dpr_Num_240_6),
+            sedprObj_1=std.error(dpr_Obj_240_1), sedprObj_2=std.error(dpr_Obj_240_2),sedprObj_3=std.error(dpr_Obj_240_3),
+            sedprObj_4=std.error(dpr_Obj_240_4),sedprObj_5=std.error(dpr_Obj_240_5), sedprObj_6=std.error(dpr_Obj_240_6),
+            sedprPse_1=std.error(dpr_Pse_240_1), sedprPse_2=std.error(dpr_Pse_240_2),sedprPse_3=std.error(dpr_Pse_240_3),
+            sedprPse_4=std.error(dpr_Pse_240_4), sedprPse_5=std.error(dpr_Pse_240_5), sedprPse_6=std.error(dpr_Pse_240_6))
+
+Reading_Graphs <- Reading_Graphs %>% rename(meandprLet_1=mean_dpr_Let_240_1)
+Reading_Graphs <- Reading_Graphs %>% rename(meandprLet_2=mean_dpr_Let_240_2)
+Reading_Graphs <- Reading_Graphs %>% rename(meandprLet_3=mean_dpr_Let_240_3)
+Reading_Graphs <- Reading_Graphs %>% rename(meandprLet_4=mean_dpr_Let_240_4)
+Reading_Graphs <- Reading_Graphs %>% rename(meandprLet_5=mean_dpr_Let_240_5)
+Reading_Graphs <- Reading_Graphs %>% rename(meandprLet_6=mean_dpr_Let_240_6)
+Reading_Graphs <- Reading_Graphs %>% rename(meandprNum_1=mean_dpr_Num_240_1)
+Reading_Graphs <- Reading_Graphs %>% rename(meandprNum_2=mean_dpr_Num_240_2)
+Reading_Graphs <- Reading_Graphs %>% rename(meandprNum_3=mean_dpr_Num_240_3)
+Reading_Graphs <- Reading_Graphs %>% rename(meandprNum_4=mean_dpr_Num_240_4)
+Reading_Graphs <- Reading_Graphs %>% rename(meandprNum_5=mean_dpr_Num_240_5)
+Reading_Graphs <- Reading_Graphs %>% rename(meandprNum_6=mean_dpr_Num_240_6)
+Reading_Graphs <- Reading_Graphs %>% rename(meandprObj_1=mean_dpr_Obj_240_1)
+Reading_Graphs <- Reading_Graphs %>% rename(meandprObj_2=mean_dpr_Obj_240_2)
+Reading_Graphs <- Reading_Graphs %>% rename(meandprObj_3=mean_dpr_Obj_240_3)
+Reading_Graphs <- Reading_Graphs %>% rename(meandprObj_4=mean_dpr_Obj_240_4)
+Reading_Graphs <- Reading_Graphs %>% rename(meandprObj_5=mean_dpr_Obj_240_5)
+Reading_Graphs <- Reading_Graphs %>% rename(meandprObj_6=mean_dpr_Obj_240_6)
+Reading_Graphs <- Reading_Graphs %>% rename(meandprPse_1=mean_dpr_Pse_240_1)
+Reading_Graphs <- Reading_Graphs %>% rename(meandprPse_2=mean_dpr_Pse_240_2)
+Reading_Graphs <- Reading_Graphs %>% rename(meandprPse_3=mean_dpr_Pse_240_3)
+Reading_Graphs <- Reading_Graphs %>% rename(meandprPse_4=mean_dpr_Pse_240_4)
+Reading_Graphs <- Reading_Graphs %>% rename(meandprPse_5=mean_dpr_Pse_240_5)
+Reading_Graphs <- Reading_Graphs %>% rename(meandprPse_6=mean_dpr_Pse_240_6)
+
+Reading_Graphs_mean <- Reading_Graphs %>% pivot_longer(cols=c("meandprLet_1", "meandprLet_2", "meandprLet_3", "meandprLet_4", "meandprLet_5", "meandprLet_6", 
+                                                        "meandprNum_1", "meandprNum_2", "meandprNum_3", "meandprNum_4", "meandprNum_5", "meandprNum_6", 
+                                                        "meandprObj_1", "meandprObj_2", "meandprObj_3", "meandprObj_4", "meandprObj_5", "meandprObj_6",
+                                                        "meandprPse_1", "meandprPse_2", "meandprPse_3", "meandprPse_4", "meandprPse_5", "meandprPse_6"),
+                                                 names_sep="_", names_to=c("symbol", "position"), values_to="mean_dprime")
+
+Reading_Graphs_se <- Reading_Graphs %>% pivot_longer(cols=c("sedprLet_1", "sedprLet_2", "sedprLet_3", "sedprLet_4", "sedprLet_5", "sedprLet_6", 
+                                                      "sedprNum_1", "sedprNum_2", "sedprNum_3", "sedprNum_4", "sedprNum_5", "sedprNum_6", 
+                                                      "sedprObj_1", "sedprObj_2", "sedprObj_3", "sedprObj_4", "sedprObj_5", "sedprObj_6", 
+                                                      "sedprPse_1", "sedprPse_2", "sedprPse_3", "sedprPse_4", "sedprPse_5", "sedprPse_6"), 
+                                               names_sep="_", names_to=c("symbol", "position"), values_to="se_dprime")
+
+Reading_Graphs_se_short <- Reading_Graphs_se %>% dplyr::select(c(se_dprime))
+
+Reading_Graphs_Combined <- cbind(Reading_Graphs_mean,Reading_Graphs_se_short)
+
+Reading_Graphs_Short <- Reading_Graphs_Combined %>% dplyr::select(c(reading_group, symbol, position, mean_dprime, se_dprime))
+```
+
+```{r figure-five, echo=FALSE, warning=FALSE, message=FALSE}
+#Letters
+Let_SPF_RG <- Reading_Graphs_Short %>% filter(symbol=="meandprLet") %>% 
+  ggplot(aes(x = position, y = mean_dprime, group = reading_group, color = reading_group, linetype=reading_group)) + 
+  geom_line(size=1, color = "#317B22") + 
+  ylim(0,2.5) +
+  labs(x="Position",y="Task Performance (d')", title="Letters", linetype="Reading Ability Group") + 
+  geom_errorbar(aes(ymin = mean_dprime - se_dprime, ymax = mean_dprime + se_dprime, group = reading_group), width = .5,size=1, 
+                position = position_dodge(.05), color = "#317B22", linetype = "solid") +
+  scale_linetype_manual(values = c("solid", "dotted")) +
+  theme_bw() +
+  guides(color = guide_legend(override.aes = list(color = "black", size = 2)),
+         linetype = guide_legend(override.aes = list(color = "black", size = 15, linewidth = 3))) +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line.x = element_line(color = "black", size = 0.5),
+        axis.line.y = element_line(color = "black", size = 0.5),
+        panel.grid.major.y = element_line(color = "gray", size = 0.1),
+        panel.grid.major.x = element_line(color = "gray", size = 0.1),
+        panel.grid.minor.y = element_blank(),
+        axis.title.x = element_text(color = "black", size = 25),
+        axis.title.y = element_text(color = "black", size = 25),
+        axis.text.x = element_text(color = "black",  margin = margin(t = .1), size = 20),
+        axis.text.y = element_text(color = "black", size = 20),
+        plot.title=element_text(face="bold", hjust = 0.5),
+        title = element_text(color = "black", size = 25),
+        legend.text=element_text(color = "black", size = 20),
+        legend.title = element_text(face = "bold", size = 20),
+        text = element_text(family = "Times New Roman"))
+
+#Numbers
+Num_SPF_RG <- Reading_Graphs_Short %>% filter(symbol=="meandprNum") %>% 
+  ggplot(aes(x = position, y = mean_dprime, group = reading_group, color = reading_group, linetype=reading_group)) + 
+  geom_line(size=1, color="#462255") + 
+  ylim(0,2.5) +
+  labs(x="Position",y="Task Performance (d')", title="Numbers", linetype="Reading Ability Group") + 
+  geom_errorbar(aes(ymin = mean_dprime - se_dprime, ymax = mean_dprime + se_dprime, group = reading_group), width = .5,size=1, 
+                position = position_dodge(.05), color="#462255", linetype = "solid") + 
+  scale_linetype_manual(values = c("solid", "dotted")) +
+  theme_bw() +
+  guides(color = guide_legend(override.aes = list(color = "black", size = 2)),
+         linetype = guide_legend(override.aes = list(color = "black", size = 15, linewidth = 3))) +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line.x = element_line(color = "black", size = 0.5),
+        axis.line.y = element_line(color = "black", size = 0.5),
+        panel.grid.major.y = element_line(color = "gray", size = 0.1),
+        panel.grid.major.x = element_line(color = "gray", size = 0.1),
+        panel.grid.minor.y = element_blank(),
+        axis.title.x = element_text(color = "black", size = 25),
+        axis.title.y = element_text(color = "black", size = 25),
+        axis.text.x = element_text(color = "black",  margin = margin(t = .1), size = 20),
+        axis.text.y = element_text(color = "black", size = 20),
+        plot.title=element_text(face="bold", hjust = 0.5),
+        title = element_text(color = "black", size = 25),
+        legend.text=element_text(color = "black", size = 20),
+        legend.title = element_text(face = "bold", size = 20),
+        text = element_text(family = "Times New Roman"))
+
+#Objects
+Obj_SPF_RG <- Reading_Graphs_Short %>% filter(symbol=="meandprObj") %>% 
+  ggplot(aes(x = position, y = mean_dprime, group = reading_group, color = reading_group, linetype=reading_group)) + 
+  geom_line(size=1, color="#B20D30") + 
+  ylim(0,2.5) +
+  labs(x="Position",y="Task Performance (d')", title="Objects", linetype="Reading Ability Group") + 
+  geom_errorbar(aes(ymin = mean_dprime - se_dprime, ymax = mean_dprime + se_dprime, group = reading_group), width = .5,size=1, 
+                position = position_dodge(.05), color="#B20D30", linetype = "solid") + 
+  scale_linetype_manual(values = c("solid", "dotted")) +
+  theme_bw() +
+  guides(color = guide_legend(override.aes = list(color = "black", size = 2)),
+         linetype = guide_legend(override.aes = list(color = "black", size = 15, linewidth = 3))) +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line.x = element_line(color = "black", size = 0.5),
+        axis.line.y = element_line(color = "black", size = 0.5),
+        panel.grid.major.y = element_line(color = "gray", size = 0.1),
+        panel.grid.major.x = element_line(color = "gray", size = 0.1),
+        panel.grid.minor.y = element_blank(),
+        axis.title.x = element_text(color = "black", size = 25),
+        axis.title.y = element_text(color = "black", size = 25),
+        axis.text.x = element_text(color = "black",  margin = margin(t = .1), size = 20),
+        axis.text.y = element_text(color = "black", size = 20),
+        plot.title=element_text(face="bold", hjust = 0.5),
+        title = element_text(color = "black", size = 25),
+        legend.text=element_text(color = "black", size = 20),
+        legend.title = element_text(face = "bold", size = 20),
+        text = element_text(family = "Times New Roman"))
+
+#Pseudo-fonts
+Pse_SPF_RG <- Reading_Graphs_Short %>% filter(symbol=="meandprPse") %>% 
+  ggplot(aes(x = position, y = mean_dprime, group = reading_group, color = reading_group, linetype=reading_group)) + 
+  geom_line(size=1, color="#C17817") + 
+  ylim(0,2.5) +
+  labs(x="Position",y="Task Performance (d')", title="Pseudo-fonts", linetype="Reading Ability Group") + 
+  geom_errorbar(aes(ymin = mean_dprime - se_dprime, ymax = mean_dprime + se_dprime, group = reading_group), width = .5,size=1, 
+                position = position_dodge(.05), color="#C17817", linetype = "solid") +
+  scale_linetype_manual(values = c("solid", "dotted")) +
+  theme_bw() +
+  guides(color = guide_legend(override.aes = list(color = "black", size = 2)),
+         linetype = guide_legend(override.aes = list(color = "black", size = 15, linewidth = 3))) +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line.x = element_line(color = "black", size = 0.5),
+        axis.line.y = element_line(color = "black", size = 0.5),
+        panel.grid.major.y = element_line(color = "gray", size = 0.1),
+        panel.grid.major.x = element_line(color = "gray", size = 0.1),
+        panel.grid.minor.y = element_blank(),
+        axis.title.x = element_text(color = "black", size = 25),
+        axis.title.y = element_text(color = "black", size = 25),
+        axis.text.x = element_text(color = "black",  margin = margin(t = .1), size = 20),
+        axis.text.y = element_text(color = "black", size = 20),
+        plot.title=element_text(face="bold", hjust = 0.5),
+        title = element_text(color = "black", size = 25),
+        legend.text=element_text(color = "black", size = 20),
+        legend.title = element_text(face = "bold", size = 20),
+        text = element_text(family = "Times New Roman"))
+
+Reading_Group_SPF <- ggarrange(Let_SPF_RG, Num_SPF_RG, Obj_SPF_RG, Pse_SPF_RG, ncol=2, nrow=2, common.legend = TRUE, legend="bottom", labels = c("a.","b.","c.","d."), font.label = list(size = 25, face = "bold", color = "black", family = "Times New Roman"))
+
+Reading_Group_SPF
+```
+
+```{r supplementary-figure-one, echo=FALSE, warning=FALSE, message=FALSE}
+Adult_WJ_Histogram <- ggplot(data = Beyond_Letters %>% filter(age_category == "Adult"), aes(x = wj_brs)) + 
+  geom_histogram(fill = "#707070",color = "#707070") + 
+  labs(title = "Adults (n=20)", x = "WJ Basic Reading Score", y = "Count") + 
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line.x = element_line(color = "black", size = 0.5),
+        axis.line.y = element_line(color = "black", size = 0.5),
+        panel.grid.major.y = element_line(color = "gray", size = 0.1),
+        panel.grid.major.x = element_line(color = "gray", size = 0.1),
+        panel.grid.minor.y = element_blank(),
+        axis.title.x = element_text(color = "black", size = 25),
+        axis.title.y = element_text(color = "black", size = 25),
+        axis.text.x = element_text(color = "black",  margin = margin(t = .1), size = 20),
+        axis.text.y = element_text(color = "black", size = 20),
+        plot.title=element_text(face="bold", hjust = 0.5),
+        title = element_text(color = "black", size = 25),
+        legend.text=element_text(color = "black", size = 20),
+        legend.title = element_text(face = "bold", size = 20),
+        text = element_text(family = "Times New Roman"),
+        panel.background = element_blank()) +
+  coord_cartesian(ylim = c(0, 10)) +
+  scale_y_continuous(breaks = seq(0, 10, by = 1))
+
+Child_WJ_Histogram <- ggplot(data = Beyond_Letters %>% filter(age_category == "Child"), aes(x = wj_brs)) + 
+  geom_histogram(fill = "#b8b8b8", color = "#b8b8b8") + 
+  labs(title = "Children (n=98)", x = "WJ Basic Reading Score", y = "Count") + 
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line.x = element_line(color = "black", size = 0.5),
+        axis.line.y = element_line(color = "black", size = 0.5),
+        panel.grid.major.y = element_line(color = "gray", size = 0.1),
+        panel.grid.major.x = element_line(color = "gray", size = 0.1),
+        panel.grid.minor.y = element_blank(),
+        axis.title.x = element_text(color = "black", size = 25),
+        axis.title.y = element_text(color = "black", size = 25),
+        axis.text.x = element_text(color = "black",  margin = margin(t = .1), size = 20),
+        axis.text.y = element_text(color = "black", size = 20),
+        plot.title=element_text(face="bold", hjust = 0.5),
+        title = element_text(color = "black", size = 25),
+        legend.text=element_text(color = "black", size = 20),
+        legend.title = element_text(face = "bold", size = 20),
+        text = element_text(family = "Times New Roman"),
+        panel.background = element_blank()) +
+  coord_cartesian(ylim = c(0, 10)) +
+  scale_y_continuous(breaks = seq(0, 10, by = 1))
+
+WJ_Histogram <- ggarrange(Child_WJ_Histogram, Adult_WJ_Histogram, ncol=2, nrow=1)
+
+WJ_Histogram
+```
+
+```{r supplementary-figure-two, echo=FALSE, warning=FALSE, message=FALSE}
+#Letters
+Let_Twre <- ggplot(Beyond_Letters_Child, aes(x=twre_index, y=dp_Let_AA)) +
+  geom_point(color="#317B22", alpha=.8, size=5) +
+  geom_smooth(method=lm , color="#317B22", se=FALSE, size=2) +   
+  labs(x = "TOWRE Index", y ="Age-Adjusted Task Performance (d')", title="Letters") + 
+  stat_cor(cor.coef.name=c("r", "p"), size=10, color="black") + 
+  theme(text = element_text(color="black")) +
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line.x = element_line(color = "black", size = 0.5),
+        axis.line.y = element_line(color = "black", size = 0.5),
+        panel.grid.major.y = element_line(color = "gray", size = 0.1),
+        panel.grid.major.x = element_line(color = "gray", size = 0.1),
+        panel.grid.minor.y = element_blank(),
+        axis.title.x = element_text(color = "black", size = 25),
+        axis.title.y = element_text(color = "black", size = 25),
+        axis.text.x = element_text(color = "black",  margin = margin(t = .1), size = 20),
+        axis.text.y = element_text(color = "black", size = 20),
+        plot.title=element_text(face="bold", hjust = 0.5),
+        title = element_text(color = "black", size = 25),
+        legend.text=element_text(color = "black", size = 20),
+        legend.title = element_text(face = "bold", size = 20),
+        text = element_text(family = "Times New Roman")) + 
+  coord_cartesian(ylim = c(-2, 2))
+
+#Numbers
+Num_Twre <- ggplot(Beyond_Letters_Child, aes(x=twre_index, y=dp_Num_AA)) +
+  geom_point(color="#462255", alpha=.8, size=5) +
+  geom_smooth(method=lm , color="#462255", se=FALSE, size=2) +   
+  labs(x = "TOWRE Index", y ="Age-Adjusted Task Performance (d')", title="Numbers") + 
+  stat_cor(cor.coef.name=c("r", "p"), size=10, color="black") + 
+  theme(text = element_text(color="black")) +
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line.x = element_line(color = "black", size = 0.5),
+        axis.line.y = element_line(color = "black", size = 0.5),
+        panel.grid.major.y = element_line(color = "gray", size = 0.1),
+        panel.grid.major.x = element_line(color = "gray", size = 0.1),
+        panel.grid.minor.y = element_blank(),
+        axis.title.x = element_text(color = "black", size = 25),
+        axis.title.y = element_text(color = "black", size = 25),
+        axis.text.x = element_text(color = "black",  margin = margin(t = .1), size = 20),
+        axis.text.y = element_text(color = "black", size = 20),
+        plot.title=element_text(face="bold", hjust = 0.5),
+        title = element_text(color = "black", size = 25),
+        legend.text=element_text(color = "black", size = 20),
+        legend.title = element_text(face = "bold", size = 20),
+        text = element_text(family = "Times New Roman")) + 
+  coord_cartesian(ylim = c(-2, 2))
+
+#Objects
+Obj_Twre <- ggplot(Beyond_Letters_Child, aes(x=twre_index, y=dp_Obj_AA)) +
+  geom_point(color="#B20D30", alpha=.8, size=5) +
+  geom_smooth(method=lm , color="#B20D30", se=FALSE, size=2) +   
+  labs(x = "TOWRE Index", y ="Age-Adjusted Task Performance (d')", title="Objects") + 
+  stat_cor(cor.coef.name=c("r", "p"), size=10, color="black") + 
+  theme(text = element_text(color="black")) +
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line.x = element_line(color = "black", size = 0.5),
+        axis.line.y = element_line(color = "black", size = 0.5),
+        panel.grid.major.y = element_line(color = "gray", size = 0.1),
+        panel.grid.major.x = element_line(color = "gray", size = 0.1),
+        panel.grid.minor.y = element_blank(),
+        axis.title.x = element_text(color = "black", size = 25),
+        axis.title.y = element_text(color = "black", size = 25),
+        axis.text.x = element_text(color = "black",  margin = margin(t = .1), size = 20),
+        axis.text.y = element_text(color = "black", size = 20),
+        plot.title=element_text(face="bold", hjust = 0.5),
+        title = element_text(color = "black", size = 25),
+        legend.text=element_text(color = "black", size = 20),
+        legend.title = element_text(face = "bold", size = 20),
+        text = element_text(family = "Times New Roman")) + 
+  coord_cartesian(ylim = c(-2, 2))
+
+#Pseudo-fonts
+Pse_Twre <- ggplot(Beyond_Letters_Child, aes(x=twre_index, y=dp_pLet_AA)) +
+  geom_point(color="#C17817", alpha=.8, size=5) +
+  geom_smooth(method=lm , color="#C17817", se=FALSE, size=2) +   
+  labs(x = "TOWRE Index", y ="Age-Adjusted Task Performance (d')", title="Pseudo-fonts") + 
+  stat_cor(cor.coef.name=c("r", "p"), size=10, color="black") + 
+  theme(text = element_text(color="black")) +
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line.x = element_line(color = "black", size = 0.5),
+        axis.line.y = element_line(color = "black", size = 0.5),
+        panel.grid.major.y = element_line(color = "gray", size = 0.1),
+        panel.grid.major.x = element_line(color = "gray", size = 0.1),
+        panel.grid.minor.y = element_blank(),
+        axis.title.x = element_text(color = "black", size = 25),
+        axis.title.y = element_text(color = "black", size = 25),
+        axis.text.x = element_text(color = "black",  margin = margin(t = .1), size = 20),
+        axis.text.y = element_text(color = "black", size = 20),
+        plot.title=element_text(face="bold", hjust = 0.5),
+        title = element_text(color = "black", size = 25),
+        legend.text=element_text(color = "black", size = 20),
+        legend.title = element_text(face = "bold", size = 20),
+        text = element_text(family = "Times New Roman")) + 
+  coord_cartesian(ylim = c(-2, 2))
+
+TOWRE <- ggarrange(Let_Twre, Num_Twre, Obj_Twre, Pse_Twre, ncol=2, nrow=2, common.legend = TRUE, legend="bottom", labels = c("a.","b.","c.","d."), font.label = list(size = 25, face = "bold", color = "black", family = "Times New Roman"))
+
+TOWRE
+```
+
+```{r supplementary-figure-three, echo=FALSE, warning=FALSE, message=FALSE}
+#Letters
+Let_CTOPP <- ggplot(Beyond_Letters_Child, aes(x=ctopp_rapid, y=dp_Let_AA)) +
+  geom_point(color="#317B22", alpha=.8, size=5) +
+  geom_smooth(method=lm , color="#317B22", se=FALSE, size=2) +   
+  labs(x = "CTOPP Rapid Symbol Naming", y ="Age-Adjusted Task Performance (d')", title="Letters") + 
+  stat_cor(cor.coef.name=c("r", "p"), size=10, color="black") + 
+  theme(text = element_text(color="black")) +
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line.x = element_line(color = "black", size = 0.5),
+        axis.line.y = element_line(color = "black", size = 0.5),
+        panel.grid.major.y = element_line(color = "gray", size = 0.1),
+        panel.grid.major.x = element_line(color = "gray", size = 0.1),
+        panel.grid.minor.y = element_blank(),
+        axis.title.x = element_text(color = "black", size = 25),
+        axis.title.y = element_text(color = "black", size = 25), 
+        axis.text.x = element_text(color = "black",  margin = margin(t = .1), size = 20),
+        axis.text.y = element_text(color = "black", size = 20),
+        plot.title=element_text(face="bold", hjust = 0.5),
+        title = element_text(color = "black", size = 25),
+        legend.text=element_text(color = "black", size = 20),
+        legend.title = element_text(face = "bold", size = 20),
+        text = element_text(family = "Times New Roman")) + 
+  coord_cartesian(ylim = c(-2, 2))
+
+#Numbers
+Num_CTOPP <- ggplot(Beyond_Letters_Child, aes(x=ctopp_rapid, y=dp_Num_AA)) +
+  geom_point(color="#462255", alpha=.8, size=5) +
+  geom_smooth(method=lm , color="#462255", se=FALSE, size=2) +   
+  labs(x = "CTOPP Rapid Symbol Naming", y ="Age-Adjusted Task Performance (d')", title="Numbers") + 
+  stat_cor(cor.coef.name=c("r", "p"), size=10, color="black") + 
+  theme(text = element_text(color="black")) +
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line.x = element_line(color = "black", size = 0.5),
+        axis.line.y = element_line(color = "black", size = 0.5),
+        panel.grid.major.y = element_line(color = "gray", size = 0.1),
+        panel.grid.major.x = element_line(color = "gray", size = 0.1),
+        panel.grid.minor.y = element_blank(),
+        axis.title.x = element_text(color = "black", size = 25),
+        axis.title.y = element_text(color = "black", size = 25),
+        axis.text.x = element_text(color = "black",  margin = margin(t = .1), size = 20),
+        axis.text.y = element_text(color = "black", size = 20),
+        plot.title=element_text(face="bold", hjust = 0.5),
+        title = element_text(color = "black", size = 25),
+        legend.text=element_text(color = "black", size = 20),
+        legend.title = element_text(face = "bold", size = 20),
+        text = element_text(family = "Times New Roman")) + 
+  coord_cartesian(ylim = c(-2, 2))
+
+#Objects
+Obj_CTOPP <- ggplot(Beyond_Letters_Child, aes(x=ctopp_rapid, y=dp_Obj_AA)) +
+  geom_point(color="#B20D30", alpha=.8, size=5) +
+  geom_smooth(method=lm , color="#B20D30", se=FALSE, size=2) +   
+  labs(x = "CTOPP Rapid Symbol Naming", y ="Age-Adjusted Task Performance (d')", title="Objects") + 
+  stat_cor(cor.coef.name=c("r", "p"), size=10, color="black") + 
+  theme(text = element_text(color="black")) +
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line.x = element_line(color = "black", size = 0.5),
+        axis.line.y = element_line(color = "black", size = 0.5),
+        panel.grid.major.y = element_line(color = "gray", size = 0.1),
+        panel.grid.major.x = element_line(color = "gray", size = 0.1),
+        panel.grid.minor.y = element_blank(),
+        axis.title.x = element_text(color = "black", size = 25),
+        axis.title.y = element_text(color = "black", size = 25),
+        axis.text.x = element_text(color = "black",  margin = margin(t = .1), size = 20),
+        axis.text.y = element_text(color = "black", size = 20),
+        plot.title=element_text(face="bold", hjust = 0.5),
+        title = element_text(color = "black", size = 25),
+        legend.text=element_text(color = "black", size = 20),
+        legend.title = element_text(face = "bold", size = 20),
+        text = element_text(family = "Times New Roman")) + 
+  coord_cartesian(ylim = c(-2, 2))
+
+#Pseudo-fonts
+Pse_CTOPP <- ggplot(Beyond_Letters_Child, aes(x=ctopp_rapid, y=dp_pLet_AA)) +
+  geom_point(color="#C17817", alpha=.8, size=5) +
+  geom_smooth(method=lm , color="#C17817", se=FALSE, size=2) +   
+  labs(x = "CTOPP Rapid Symbol Naming", y ="Age-Adjusted Task Performance (d')", title="Pseudo-fonts") + 
+  stat_cor(cor.coef.name=c("r", "p"), size=10, color="black") + 
+  theme(text = element_text(color="black")) +
+  theme_bw() +
+  theme(panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(), 
+        axis.line.x = element_line(color = "black", size = 0.5),
+        axis.line.y = element_line(color = "black", size = 0.5),
+        panel.grid.major.y = element_line(color = "gray", size = 0.1),
+        panel.grid.major.x = element_line(color = "gray", size = 0.1),
+        panel.grid.minor.y = element_blank(),
+        axis.title.x = element_text(color = "black", size = 25),
+        axis.title.y = element_text(color = "black", size = 25),
+        axis.text.x = element_text(color = "black",  margin = margin(t = .1), size = 20),
+        axis.text.y = element_text(color = "black", size = 20),
+        plot.title=element_text(face="bold", hjust = 0.5),
+        title = element_text(color = "black", size = 25),
+        legend.text=element_text(color = "black", size = 20),
+        legend.title = element_text(face = "bold", size = 20),
+        text = element_text(family = "Times New Roman"))  + 
+  coord_cartesian(ylim = c(-2, 2))
+
+CTOPP <- ggarrange(Let_CTOPP, Num_CTOPP, Obj_CTOPP, Pse_CTOPP,  ncol=2, nrow=2, common.legend = TRUE, legend="bottom", labels = c("a.","b.","c.","d."), font.label = list(size = 25, face = "bold", color = "black", family = "Times New Roman"))
+
+CTOPP
+```
+
+```{r age-stats, echo=FALSE, warning=FALSE, message=FALSE}
+Age_Stats <- Beyond_Letters %>% group_by(record_id) %>%
+  summarise(mean_dpr_Let_240_1=mean(dpr_Let_240_1, na.rm = TRUE), mean_dpr_Let_240_2=mean(dpr_Let_240_2, na.rm = TRUE), 
+            mean_dpr_Let_240_3=mean(dpr_Let_240_3, na.rm = TRUE), mean_dpr_Let_240_4=mean(dpr_Let_240_4, na.rm = TRUE), 
+            mean_dpr_Let_240_5=mean(dpr_Let_240_5, na.rm = TRUE), mean_dpr_Let_240_6=mean(dpr_Let_240_6, na.rm = TRUE), 
+            mean_dpr_Num_240_1=mean(dpr_Num_240_1, na.rm = TRUE), mean_dpr_Num_240_2=mean(dpr_Num_240_2, na.rm = TRUE), 
+            mean_dpr_Num_240_3=mean(dpr_Num_240_3, na.rm = TRUE), mean_dpr_Num_240_4=mean(dpr_Num_240_4, na.rm = TRUE),
+            mean_dpr_Num_240_5=mean(dpr_Num_240_5, na.rm = TRUE), mean_dpr_Num_240_6=mean(dpr_Num_240_6, na.rm = TRUE), 
+            mean_dpr_Obj_240_1=mean(dpr_Obj_240_1, na.rm = TRUE), mean_dpr_Obj_240_2=mean(dpr_Obj_240_2, na.rm = TRUE), 
+            mean_dpr_Obj_240_3=mean(dpr_Obj_240_3, na.rm = TRUE), mean_dpr_Obj_240_4=mean(dpr_Obj_240_4, na.rm = TRUE), 
+            mean_dpr_Obj_240_5=mean(dpr_Obj_240_5, na.rm = TRUE), mean_dpr_Obj_240_6=mean(dpr_Obj_240_6, na.rm = TRUE), 
+            mean_dpr_Pse_240_1=mean(dpr_Pse_240_1, na.rm = TRUE), mean_dpr_Pse_240_2=mean(dpr_Pse_240_2, na.rm = TRUE), 
+            mean_dpr_Pse_240_3=mean(dpr_Pse_240_3, na.rm = TRUE), mean_dpr_Pse_240_4=mean(dpr_Pse_240_4, na.rm = TRUE), 
+            mean_dpr_Pse_240_5=mean(dpr_Pse_240_5, na.rm = TRUE), mean_dpr_Pse_240_6=mean(dpr_Pse_240_6, na.rm = TRUE))
+
+Age_Stats <- Age_Stats %>% rename(Let_1=mean_dpr_Let_240_1)
+Age_Stats <- Age_Stats %>% rename(Let_2=mean_dpr_Let_240_2)
+Age_Stats <- Age_Stats %>% rename(Let_3=mean_dpr_Let_240_3)
+Age_Stats <- Age_Stats %>% rename(Let_4=mean_dpr_Let_240_4)
+Age_Stats <- Age_Stats %>% rename(Let_5=mean_dpr_Let_240_5)
+Age_Stats <- Age_Stats %>% rename(Let_6=mean_dpr_Let_240_6)
+Age_Stats <- Age_Stats %>% rename(Num_1=mean_dpr_Num_240_1)
+Age_Stats <- Age_Stats %>% rename(Num_2=mean_dpr_Num_240_2)
+Age_Stats <- Age_Stats %>% rename(Num_3=mean_dpr_Num_240_3)
+Age_Stats <- Age_Stats %>% rename(Num_4=mean_dpr_Num_240_4)
+Age_Stats <- Age_Stats %>% rename(Num_5=mean_dpr_Num_240_5)
+Age_Stats <- Age_Stats %>% rename(Num_6=mean_dpr_Num_240_6)
+Age_Stats <- Age_Stats %>% rename(Obj_1=mean_dpr_Obj_240_1)
+Age_Stats <- Age_Stats %>% rename(Obj_2=mean_dpr_Obj_240_2)
+Age_Stats <- Age_Stats %>% rename(Obj_3=mean_dpr_Obj_240_3)
+Age_Stats <- Age_Stats %>% rename(Obj_4=mean_dpr_Obj_240_4)
+Age_Stats <- Age_Stats %>% rename(Obj_5=mean_dpr_Obj_240_5)
+Age_Stats <- Age_Stats %>% rename(Obj_6=mean_dpr_Obj_240_6)
+Age_Stats <- Age_Stats %>% rename(Pse_1=mean_dpr_Pse_240_1)
+Age_Stats <- Age_Stats %>% rename(Pse_2=mean_dpr_Pse_240_2)
+Age_Stats <- Age_Stats %>% rename(Pse_3=mean_dpr_Pse_240_3)
+Age_Stats <- Age_Stats %>% rename(Pse_4=mean_dpr_Pse_240_4)
+Age_Stats <- Age_Stats %>% rename(Pse_5=mean_dpr_Pse_240_5)
+Age_Stats <- Age_Stats %>% rename(Pse_6=mean_dpr_Pse_240_6)
+
+Age_Stats_Merge <- merge(Age_Stats, Beyond_Letters[, c("record_id", "age_category")], by = "record_id", all.x = TRUE)
+
+Age_Stats <- Age_Stats_Merge %>% pivot_longer(cols=c("Let_1", "Let_2", "Let_3", "Let_4", "Let_5", "Let_6", 
+                                                   "Num_1", "Num_2", "Num_3", "Num_4", "Num_5", "Num_6", 
+                                                   "Obj_1", "Obj_2", "Obj_3", "Obj_4", "Obj_5", "Obj_6", 
+                                                   "Pse_1", "Pse_2", "Pse_3", "Pse_4", "Pse_5", "Pse_6"), 
+                                            names_sep="_", names_to=c("symbol", "position"), values_to="mean_dprime")
+
+Age_Stats$age_category <- ((as.factor(Age_Stats$age_category)))
+Age_Stats$symbol <- ((as.factor(Age_Stats$symbol)))
+Age_Stats$record_id <- as.factor(Age_Stats$record_id)
+Age_Stats$position <- as.factor(Age_Stats$position)
+Age_Stats <- Age_Stats %>% rename(stimulus_type = symbol)
+Age_Stats <- Age_Stats %>% rename(age_group = age_category)
+
+#Adult+Child Data
+Age_model_one <- lmer(mean_dprime ~ age_group * stimulus_type + (1 | record_id), data = Age_Stats)
+anova(Age_model_one)
+F_to_eta2(f=c(56.801, 102.721, 16.693), df=c(1, 3, 3), df_error=c(119, 2777, 2777))
+pairs(emmeans(Age_model_one,c("age_group","stimulus_type")), adjust = "bonf")
+summary(pairs(emmeans(Age_model_one,c("age_group","stimulus_type")), adjust = "bonf"))$p.value
+
+
+Age_model_two <- lmer(mean_dprime ~ age_group * stimulus_type * position + (1 | record_id), data = Age_Stats)
+anova(Age_model_two)
+F_to_eta2(f=c(177.0130, 10.6457, 8.2803, 1.2917), df=c(5, 5, 15, 15), df_error=c(2737, 2737,2737, 2737))
+```
+
+```{r reading-group-stats, echo=FALSE, warning=FALSE, message=FALSE}
+Reading_Group_Stats <- Beyond_Letters_Child %>% group_by(record_id) %>%
+  summarise(mean_dpr_Let_240_1=mean(dpr_Let_240_1, na.rm = TRUE), mean_dpr_Let_240_2=mean(dpr_Let_240_2, na.rm = TRUE), 
+            mean_dpr_Let_240_3=mean(dpr_Let_240_3, na.rm = TRUE), mean_dpr_Let_240_4=mean(dpr_Let_240_4, na.rm = TRUE), 
+            mean_dpr_Let_240_5=mean(dpr_Let_240_5, na.rm = TRUE), mean_dpr_Let_240_6=mean(dpr_Let_240_6, na.rm = TRUE), 
+            mean_dpr_Num_240_1=mean(dpr_Num_240_1, na.rm = TRUE), mean_dpr_Num_240_2=mean(dpr_Num_240_2, na.rm = TRUE), 
+            mean_dpr_Num_240_3=mean(dpr_Num_240_3, na.rm = TRUE), mean_dpr_Num_240_4=mean(dpr_Num_240_4, na.rm = TRUE),
+            mean_dpr_Num_240_5=mean(dpr_Num_240_5, na.rm = TRUE), mean_dpr_Num_240_6=mean(dpr_Num_240_6, na.rm = TRUE), 
+            mean_dpr_Obj_240_1=mean(dpr_Obj_240_1, na.rm = TRUE), mean_dpr_Obj_240_2=mean(dpr_Obj_240_2, na.rm = TRUE), 
+            mean_dpr_Obj_240_3=mean(dpr_Obj_240_3, na.rm = TRUE), mean_dpr_Obj_240_4=mean(dpr_Obj_240_4, na.rm = TRUE), 
+            mean_dpr_Obj_240_5=mean(dpr_Obj_240_5, na.rm = TRUE), mean_dpr_Obj_240_6=mean(dpr_Obj_240_6, na.rm = TRUE), 
+            mean_dpr_Pse_240_1=mean(dpr_Pse_240_1, na.rm = TRUE), mean_dpr_Pse_240_2=mean(dpr_Pse_240_2, na.rm = TRUE), 
+            mean_dpr_Pse_240_3=mean(dpr_Pse_240_3, na.rm = TRUE), mean_dpr_Pse_240_4=mean(dpr_Pse_240_4, na.rm = TRUE), 
+            mean_dpr_Pse_240_5=mean(dpr_Pse_240_5, na.rm = TRUE), mean_dpr_Pse_240_6=mean(dpr_Pse_240_6, na.rm = TRUE))
+
+Reading_Group_Stats <- Reading_Group_Stats %>% rename(Let_1=mean_dpr_Let_240_1)
+Reading_Group_Stats <- Reading_Group_Stats %>% rename(Let_2=mean_dpr_Let_240_2)
+Reading_Group_Stats <- Reading_Group_Stats %>% rename(Let_3=mean_dpr_Let_240_3)
+Reading_Group_Stats <- Reading_Group_Stats %>% rename(Let_4=mean_dpr_Let_240_4)
+Reading_Group_Stats <- Reading_Group_Stats %>% rename(Let_5=mean_dpr_Let_240_5)
+Reading_Group_Stats <- Reading_Group_Stats %>% rename(Let_6=mean_dpr_Let_240_6)
+Reading_Group_Stats <- Reading_Group_Stats %>% rename(Num_1=mean_dpr_Num_240_1)
+Reading_Group_Stats <- Reading_Group_Stats %>% rename(Num_2=mean_dpr_Num_240_2)
+Reading_Group_Stats <- Reading_Group_Stats %>% rename(Num_3=mean_dpr_Num_240_3)
+Reading_Group_Stats <- Reading_Group_Stats %>% rename(Num_4=mean_dpr_Num_240_4)
+Reading_Group_Stats <- Reading_Group_Stats %>% rename(Num_5=mean_dpr_Num_240_5)
+Reading_Group_Stats <- Reading_Group_Stats %>% rename(Num_6=mean_dpr_Num_240_6)
+Reading_Group_Stats <- Reading_Group_Stats %>% rename(Obj_1=mean_dpr_Obj_240_1)
+Reading_Group_Stats <- Reading_Group_Stats %>% rename(Obj_2=mean_dpr_Obj_240_2)
+Reading_Group_Stats <- Reading_Group_Stats %>% rename(Obj_3=mean_dpr_Obj_240_3)
+Reading_Group_Stats <- Reading_Group_Stats %>% rename(Obj_4=mean_dpr_Obj_240_4)
+Reading_Group_Stats <- Reading_Group_Stats %>% rename(Obj_5=mean_dpr_Obj_240_5)
+Reading_Group_Stats <- Reading_Group_Stats %>% rename(Obj_6=mean_dpr_Obj_240_6)
+Reading_Group_Stats <- Reading_Group_Stats %>% rename(Pse_1=mean_dpr_Pse_240_1)
+Reading_Group_Stats <- Reading_Group_Stats %>% rename(Pse_2=mean_dpr_Pse_240_2)
+Reading_Group_Stats <- Reading_Group_Stats %>% rename(Pse_3=mean_dpr_Pse_240_3)
+Reading_Group_Stats <- Reading_Group_Stats %>% rename(Pse_4=mean_dpr_Pse_240_4)
+Reading_Group_Stats <- Reading_Group_Stats %>% rename(Pse_5=mean_dpr_Pse_240_5)
+Reading_Group_Stats <- Reading_Group_Stats %>% rename(Pse_6=mean_dpr_Pse_240_6)
+
+Reading_Group_Stats_Merge <- merge(Reading_Group_Stats, Beyond_Letters_Child[, c("record_id", "reading_group")], by = "record_id", all.x = TRUE)
+
+Reading_Group_Stats <- Reading_Group_Stats_Merge %>% pivot_longer(cols=c("Let_1", "Let_2", "Let_3", "Let_4", "Let_5", "Let_6", 
+                                                   "Num_1", "Num_2", "Num_3", "Num_4", "Num_5", "Num_6", 
+                                                   "Obj_1", "Obj_2", "Obj_3", "Obj_4", "Obj_5", "Obj_6", 
+                                                   "Pse_1", "Pse_2", "Pse_3", "Pse_4", "Pse_5", "Pse_6"), 
+                                            names_sep="_", names_to=c("symbol", "position"), values_to="mean_dprime")
+
+Reading_Group_Stats$reading_group <- ((as.factor(Reading_Group_Stats$reading_group)))
+Reading_Group_Stats$symbol <- ((as.factor(Reading_Group_Stats$symbol)))
+Reading_Group_Stats$record_id <- as.factor(Reading_Group_Stats$record_id)
+Reading_Group_Stats$position <- as.factor(Reading_Group_Stats$position)
+
+#Control+Dyslexic Data
+Reading_Group_model_two <- lmer(mean_dprime ~ reading_group * symbol * position + (1 | record_id), data = Reading_Group_Stats)
+anova(Reading_Group_model_two)
+F_to_eta2(f=c(4.1543, 61.9853, 137.4314, 0.5966, 2.3597, 8.4148, 0.7111), df=c(1, 3, 5, 3, 5, 15, 15), df_error=c(96, 2208, 2208, 2208, 2208, 2208, 2208))
+```
